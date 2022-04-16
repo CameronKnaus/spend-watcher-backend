@@ -1,0 +1,19 @@
+{
+  "name": "spend-watcher-backend",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CameronKnaus/spend-watcher-backend.git"
+  },
+  "author": "Alex Kaariainen & Cameron Knaus",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CameronKnaus/spend-watcher-backend/issues"
+  },
+  "homepage": "https://github.com/CameronKnaus/spend-watcher-backend#readme"
+}
