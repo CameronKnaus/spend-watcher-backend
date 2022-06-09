@@ -16,7 +16,6 @@ function getUserTransactions(username) {
         // query the database
         db.query(STATEMENT, function(error, results) {
             if(error) {
-                console.log(error);
                 return reject(400);
             }
 
