@@ -42,14 +42,8 @@ module.exports = function(request, response) {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
 
-    Promise.all([
-        getUserTransactions(username),
-    ])
-        .then(values => {
-            // For readability assign values from promises
-            const allTransactions = values[0];
-
-
+    getUserTransactions(username)
+        .then(allTransactions => {
             response.status(200).json({
                 spending: allTransactions
             });

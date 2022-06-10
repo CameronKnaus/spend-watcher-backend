@@ -20,7 +20,7 @@ exports.getTotalSpent = function(transactionList) {
         return transactionList[0].amount;
     }
 
-    transactionList.reduce((prev, current) => {
-        return prev.amount + current.amount;
-    }, 0);
+    return transactionList.reduce((prev, current) => {
+        return {amount: prev.amount + current.amount};
+    }, {amount: 0}).amount;
 }

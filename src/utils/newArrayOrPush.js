@@ -1,4 +1,3 @@
-
 // If the targetKey of a given object is already an array, newElement will be pushed.
 // If it's not an array, an array with newElement at index 0 will be created.
 module.exports = function(object, targetKey, newElement) {

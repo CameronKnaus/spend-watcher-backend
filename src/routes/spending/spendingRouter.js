@@ -6,5 +6,6 @@ const verifyAuthToken = require('../../middleware/verifyAuthToken');
 // Link Routes
 spendingRouter.get('/summary', verifyAuthToken, require('./implementations/spendingSummary'));
 spendingRouter.get('/recent', verifyAuthToken, require('./implementations/recentSpending'));
+spendingRouter.post('/new', verifyAuthToken, require('./implementations/newSpending'));
 
 module.exports = spendingRouter;
