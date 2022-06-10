@@ -40,10 +40,10 @@ app.use(helmet());
 
 // Add routes
 const authRoutes = require('./src/routes/authentication/authRouter'); // Routes concerning authentication
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 
 const spendingRoutes = require('./src/routes/spending/spendingRouter');
-app.use('/spending', spendingRoutes);
+app.use('/api/spending', spendingRoutes);
 
 // Define the port
 const PORT = process.env.PORT || 4000;
