@@ -22,5 +22,5 @@ exports.getTotalSpent = function(transactionList) {
 
     return transactionList.reduce((prev, current) => {
         return {amount: prev.amount + current.amount};
-    }, {amount: 0}).amount;
+    }, {amount: 0}).amount.toFixed(2);
 }
