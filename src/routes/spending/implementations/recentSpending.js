@@ -19,28 +19,21 @@ module.exports = function(request, response) {
             return response.status(200).send({noTransactions: true})
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0,0);
-        const todayISO = today.toISOString();
-        today.setDate(today.getDate() - 1);
-        const yesterdayISO = today.toISOString();
-
         const payload = {};
         results.forEach(transaction => {
-            // For today's grouping
-            if(transaction.date.toISOString() === todayISO) {
-                newArrayOrPush(payload, 'today', transaction);
-                return;
-            }
+            const dateISO = transaction.date;
+            const date = new Date(transaction.date).toLocaleDateString('en-US', { year: '2-digit', month: '2-digit', day: '2-digit' });
 
-            // For yesterday's grouping
-            if(transaction.date.toISOString() === yesterdayISO) {
-                newArrayOrPush(payload, 'yesterday', transaction);
-                return;
-            }
-
-            // All other dates will be grouped by the date itself
-            newArrayOrPush(payload, transaction.date.toISOString(), transaction);
+            newArrayOrPush(payload, date, {
+                transactionId: transaction.transaction_id,
+                category: transaction.category,
+                amount: transaction.amount,
+                isUncommon: !!transaction.uncommon,
+                isCustomCategory: !!transaction.is_custom_category,
+                date,
+                dateISO,
+                note: transaction.note
+            });
         });
 
         response.status(200).send({ transactions: payload });

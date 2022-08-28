@@ -3,7 +3,6 @@ exports.getCurrentMonthTransactions = function(transactionsList) {
         const currentDate = new Date();
         const transactionDate = new Date(transaction.date);
 
-
         return (
             currentDate.getMonth() === transactionDate.getMonth()
             && currentDate.getFullYear() === transactionDate.getFullYear()

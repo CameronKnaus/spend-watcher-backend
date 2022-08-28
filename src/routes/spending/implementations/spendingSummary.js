@@ -28,8 +28,7 @@ function getUserTransactions(username) {
 
             const payload = {
                 currentMonthTotal,
-                currentMonthTransactions: currentMonth,
-                recentTransactions: transactionList.slice(0, 5)
+                currentMonthTransactions: currentMonth
             }
 
             resolve(payload);

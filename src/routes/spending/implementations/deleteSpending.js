@@ -12,7 +12,7 @@ module.exports = function(request, response) {
         return response.status(400).send({error: 'Missing transaction ID'})
     }
 
-    let STATEMENT = `DELETE FROM spend_transactions WHERE username="${username}" AND transaction_id=${transactionId}`
+    const STATEMENT = `DELETE FROM spend_transactions WHERE username="${username}" AND transaction_id=${transactionId}`;
 
     // query the database
     db.query(STATEMENT, function(error) {
