@@ -1,6 +1,6 @@
 const db = require('../../../lib/db');
 const getUsernameFromToken = require('../../../utils/TokenUtils/getUsernameFromToken');
-const newArrayOrPush = require('../../../utils/newArrayOrPush');
+const newArrayOrPush = require('../../../utils/ObjectManipulation/newArrayOrPush');
 
 module.exports = function(request, response) {
     // Resolve the username from the token
