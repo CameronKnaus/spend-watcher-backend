@@ -40,28 +40,33 @@ module.exports = function(request, response) {
 
         // Do an initial pass through all transactions, making a group by date object and spending totals
         let finalTotalSpent = 0;
+        let finalTotalTransactions = 0;
         const transactionsGroupedByDate = {};
-        const totalsByCategory = {};
+        const totalSpentPerCategory = {};
+        const totalTransactionsPerCategory = {};
         results.forEach(transaction => {
-            // const dateISO = transaction.date;
-            // const date = new Date(transaction.date).toLocaleDateString('en-US', { year: '2-digit', month: '2-digit', day: '2-digit' });
-
             // Update final total with current transaction
             finalTotalSpent = finalTotalSpent + transaction.amount;
+            finalTotalTransactions++;
 
             // transaction by date grouping
             groupTransactionByDate(transactionsGroupedByDate, transaction);
 
-            // Increase total spent by category
-            increaseTotalByCategory(totalsByCategory, transaction.category, transaction.amount);
+            // Increase total spent per category
+            increaseTotalByCategory(totalSpentPerCategory, transaction.category, transaction.amount);
             // Ensure all totals are rounded properly to 2 decimals
-            Object.keys(totalsByCategory).forEach(key => totalsByCategory[key] = toFixedNumber(totalsByCategory[key]));
+            Object.keys(totalSpentPerCategory).forEach(key => totalSpentPerCategory[key] = toFixedNumber(totalSpentPerCategory[key]));
+
+            // Increase the amount transactions made for the given category
+            increaseTotalByCategory(totalTransactionsPerCategory, transaction.category, 1);
         })
 
         response.status(200).json({
             finalTotalSpent,
+            finalTotalTransactions,
             transactionsGroupedByDate,
-            totalsByCategory
+            totalSpentPerCategory,
+            totalTransactionsPerCategory
         });
     });
 }
