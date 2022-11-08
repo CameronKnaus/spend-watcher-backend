@@ -45,6 +45,9 @@ app.use('/api/auth', authRoutes);
 const spendingRoutes = require('./src/routes/spending/spendingRouter');
 app.use('/api/spending', spendingRoutes);
 
+const accountRoutes = require('./src/routes/accounts/accountsRouter');
+app.use('/api/accounts', accountRoutes);
+
 // Define the port
 const PORT = process.env.PORT || 4000;
 
