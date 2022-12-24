@@ -1,6 +1,7 @@
 const db = require('../../../lib/db');
 const getUsernameFromToken = require('../../../utils/TokenUtils/getUsernameFromToken');
-const {getCurrentMonthTransactions, getTotalSpent} = require('./spendingFormatter');
+const { getCurrentMonthTransactions, getTotalSpent } = require('./spendingFormatter');
+const dayjs = require('dayjs');
 
 function getUserTransactions(username) {
     return new Promise((resolve, reject) => {
@@ -14,13 +15,17 @@ function getUserTransactions(username) {
         const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)} AND date between "${lowerBound}" AND "${upperBound}";`;
 
         // query the database
-        db.query(STATEMENT, function(error, results) {
-            if(error) {
+        db.query(STATEMENT, function (error, results) {
+            if (error) {
                 return reject(400);
             }
 
             let transactionList = results.sort((a, b) => {
                 return new Date(b.date) - new Date(a.date);
+            });
+
+            transactionList.forEach(transaction => {
+                transaction.date = dayjs(transaction.date).format('MM/DD/YY');
             });
 
             const currentMonth = getCurrentMonthTransactions(transactionList);
@@ -37,7 +42,7 @@ function getUserTransactions(username) {
 }
 
 
-module.exports = function(request, response) {
+module.exports = function (request, response) {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
 
