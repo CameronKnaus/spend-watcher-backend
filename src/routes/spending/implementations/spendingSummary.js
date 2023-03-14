@@ -1,7 +1,8 @@
+const dayjs = require('dayjs');
 const db = require('../../../lib/db');
 const getUsernameFromToken = require('../../../utils/TokenUtils/getUsernameFromToken');
 const { getCurrentMonthTransactions, getTotalSpent } = require('./spendingFormatter');
-const dayjs = require('dayjs');
+const fetchAllRecurringTransactions = require('../../recurringSpending/helpers/fetchAllRecurringTransactions');
 
 function getUserTransactions(username) {
     return new Promise((resolve, reject) => {
@@ -15,16 +16,14 @@ function getUserTransactions(username) {
         const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)} AND date between "${lowerBound}" AND "${upperBound}";`;
 
         // query the database
-        db.query(STATEMENT, function (error, results) {
+        db.query(STATEMENT, (error, results) => {
             if (error) {
                 return reject(400);
             }
 
-            let transactionList = results.sort((a, b) => {
-                return new Date(b.date) - new Date(a.date);
-            });
+            const transactionList = results.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            transactionList.forEach(transaction => {
+            transactionList.forEach((transaction) => {
                 transaction.date = dayjs(transaction.date).format('MM/DD/YY');
             });
 
@@ -34,25 +33,29 @@ function getUserTransactions(username) {
             const payload = {
                 currentMonthTotal,
                 currentMonthTransactions: currentMonth
-            }
+            };
 
             resolve(payload);
         });
     });
 }
 
-
-module.exports = function (request, response) {
+module.exports = function spendingSummary(request, response) {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
 
-    getUserTransactions(username)
-        .then(allTransactions => {
-            response.status(200).json({
-                spending: allTransactions
-            });
-        })
-        .catch(errorCode => {
-            response.status(errorCode).send();
+    Promise.all([
+        getUserTransactions(username),
+        fetchAllRecurringTransactions(username)
+    ]).then(([allTransactions, recurringSpending]) => {
+        const totalSpentThisMonth = (Number(allTransactions.currentMonthTotal) + (recurringSpending.actualMonthTotal || 0)).toFixed(2);
+
+        response.status(200).json({
+            totalSpentThisMonth,
+            spending: allTransactions,
+            recurringSpending
         });
-}
+    }).catch((errorCode) => {
+        response.status(errorCode).send();
+    });
+};

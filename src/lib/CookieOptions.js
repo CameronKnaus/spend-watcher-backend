@@ -1,4 +1,4 @@
-const { DEV_MODE } = require('../lib/ENVIRONMENT_SETTINGS.json');
+const { DEV_MODE } = require('./ENVIRONMENT_SETTINGS.json');
 
 const monthInMilliseconds = 2592000000;
 const CookieOptions = {

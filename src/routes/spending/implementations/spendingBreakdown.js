@@ -1,6 +1,6 @@
-const getUsernameFromToken = require("../../../utils/TokenUtils/getUsernameFromToken");
-const db = require("../../../lib/db");
-const newArrayOrPush = require("../../../utils/ObjectManipulation/newArrayOrPush");
+const getUsernameFromToken = require('../../../utils/TokenUtils/getUsernameFromToken');
+const db = require('../../../lib/db');
+const newArrayOrPush = require('../../../utils/ObjectManipulation/newArrayOrPush');
 const increaseTotalByCategory = require('../../../utils/ObjectManipulation/increaseTotalByKey');
 const toFixedNumber = require('../../../utils/CalculationHelpers/toFixedNumber');
 
@@ -21,20 +21,20 @@ function groupTransactionByDate(objectUnderConstruction, transaction) {
     });
 }
 
-module.exports = function(request, response) {
+module.exports = function spendingBreakdown(request, response) {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
-    const startDate = request.body.startDate;
-    const endDate = request.body.endDate;
+    const { startDate } = request.body;
+    const { endDate } = request.body;
 
     const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)} AND date between ${db.escape(startDate)} AND ${db.escape(endDate)} ORDER BY date DESC;`;
 
-    db.query(STATEMENT, function(error, results) {
+    db.query(STATEMENT, (error, results) => {
         if (error) {
             return response.status(400).send(error);
         }
 
-        if(!results || !results.length) {
+        if (!results || !results.length) {
             return response.status(200).json({ noTransactions: true });
         }
 
@@ -44,9 +44,9 @@ module.exports = function(request, response) {
         const transactionsGroupedByDate = {};
         const totalSpentPerCategory = {};
         const totalTransactionsPerCategory = {};
-        results.forEach(transaction => {
+        results.forEach((transaction) => {
             // Update final total with current transaction
-            finalTotalSpent = finalTotalSpent + transaction.amount;
+            finalTotalSpent += transaction.amount;
             finalTotalTransactions++;
 
             // transaction by date grouping
@@ -55,11 +55,13 @@ module.exports = function(request, response) {
             // Increase total spent per category
             increaseTotalByCategory(totalSpentPerCategory, transaction.category, transaction.amount);
             // Ensure all totals are rounded properly to 2 decimals
-            Object.keys(totalSpentPerCategory).forEach(key => totalSpentPerCategory[key] = toFixedNumber(totalSpentPerCategory[key]));
+            Object.keys(totalSpentPerCategory).forEach((key) => {
+                totalSpentPerCategory[key] = toFixedNumber(totalSpentPerCategory[key]);
+            });
 
             // Increase the amount transactions made for the given category
             increaseTotalByCategory(totalTransactionsPerCategory, transaction.category, 1);
-        })
+        });
 
         response.status(200).json({
             finalTotalSpent,
@@ -69,4 +71,4 @@ module.exports = function(request, response) {
             totalTransactionsPerCategory
         });
     });
-}
+};

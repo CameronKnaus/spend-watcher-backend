@@ -1,5 +1,6 @@
 /** Contains the spending related routes of the api */
 const express = require('express');
+
 const spendingRouter = express.Router();
 const verifyAuthToken = require('../../middleware/verifyAuthToken');
 

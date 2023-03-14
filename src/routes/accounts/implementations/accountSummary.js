@@ -1,13 +1,12 @@
+const dayjs = require('dayjs');
 const db = require('../../../lib/db');
 const getUsernameFromToken = require('../../../utils/TokenUtils/getUsernameFromToken');
-const dayjs = require('dayjs');
 
-module.exports = function (request, response) {
+module.exports = (request, response) => {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
 
     // Gather params
-
     const QUERY = `SELECT AccountsTable.account_id, username, account_name, is_fixed, type, growth_rate, date, amount
                     FROM ( SELECT * FROM user_information.money_accounts WHERE username="${username}") AS AccountsTable
                     JOIN ( 
@@ -21,9 +20,8 @@ module.exports = function (request, response) {
                     ) AS RecentAccountValues
                     ON AccountsTable.account_id = RecentAccountValues.account_id;`;
 
-
     // query the database
-    db.query(QUERY, function (error, results) {
+    db.query(QUERY, (error, results) => {
         if (error) {
             console.log(error);
             return results.status(400).send(error);
@@ -31,7 +29,7 @@ module.exports = function (request, response) {
 
         let totalEquity = 0;
 
-        const accountsList = results.map(accountInfo => {
+        const accountsList = results.map((accountInfo) => {
             const lastUpdated = dayjs(accountInfo.date).format('MM/YYYY');
 
             // Needs new update if no update for the current month
@@ -48,13 +46,15 @@ module.exports = function (request, response) {
                 lastUpdated,
                 requiresNewUpdate,
                 currentAccountValue: accountInfo.amount
-            }
+            };
         });
 
         response.status(200).send({
             totalEquity,
             // Sort by account value, highest to lowest
-            accountsList: accountsList.sort((a, b) => a.currentAccountValue < b.currentAccountValue ? 1 : -1)
+            accountsList: accountsList.sort((a, b) => (
+                a.currentAccountValue < b.currentAccountValue ? 1 : -1
+            ))
         });
     });
-}
+};

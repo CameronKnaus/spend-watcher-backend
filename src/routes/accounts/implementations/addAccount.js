@@ -1,20 +1,26 @@
+const { v4: uuidv4 } = require('uuid');
 const db = require('../../../lib/db');
 const getUsernameFromToken = require('../../../utils/TokenUtils/getUsernameFromToken');
-const { v4: uuidv4 } = require('uuid');
 
 const SUPPORTED_ACCOUNTS = {
     CHECKING: true,
     SAVINGS: true,
     INVESTING: true,
     BONDS: true
-}
+};
 
-module.exports = function (request, response) {
+module.exports = function addAccount(request, response) {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
 
     // Gather params
-    const { accountCategory, growthRate = 0, hasVariableGrowthRate = false, startingAccountValue, accountName } = request.body;
+    const {
+        accountCategory,
+        growthRate = 0,
+        hasVariableGrowthRate = false,
+        startingAccountValue,
+        accountName
+    } = request.body;
     const startingAmount = startingAccountValue < 0 ? 0 : startingAccountValue;
 
     if (!accountName) {
@@ -33,9 +39,8 @@ module.exports = function (request, response) {
         `INSERT INTO money_account_updates VALUES (${db.escape(newAccountId)}, DATE_SUB(NOW(), INTERVAL DAYOFMONTH(NOW())-1 DAY), ${startingAmount});`
     ].join(' ');
 
-
     // query the database
-    db.query(QUERY_LIST, function (error) {
+    db.query(QUERY_LIST, (error) => {
         if (error) {
             console.log(error);
             db.query('ROLLBACK;');
@@ -45,4 +50,4 @@ module.exports = function (request, response) {
         db.query('COMMIT;');
         response.status(200).send();
     });
-}
+};

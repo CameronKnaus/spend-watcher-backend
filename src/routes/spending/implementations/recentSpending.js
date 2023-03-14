@@ -1,9 +1,9 @@
+const dayjs = require('dayjs');
 const db = require('../../../lib/db');
 const getUsernameFromToken = require('../../../utils/TokenUtils/getUsernameFromToken');
 const newArrayOrPush = require('../../../utils/ObjectManipulation/newArrayOrPush');
-const dayjs = require('dayjs');
 
-module.exports = function (request, response) {
+module.exports = function recentSpending(request, response) {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
 
@@ -11,17 +11,17 @@ module.exports = function (request, response) {
     const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)} ORDER BY date DESC LIMIT 5`;
 
     // query the database
-    db.query(STATEMENT, function (error, results) {
+    db.query(STATEMENT, (error, results) => {
         if (error) {
             return response.status(400).send();
         }
 
         if (results.length === 0) {
-            return response.status(200).send({ noTransactions: true })
+            return response.status(200).send({ noTransactions: true });
         }
 
         const payload = {};
-        results.forEach(transaction => {
+        results.forEach((transaction) => {
             const dateISO = transaction.date;
             const date = dayjs(transaction.date).format('MM/DD/YY');
 
@@ -39,4 +39,4 @@ module.exports = function (request, response) {
 
         response.status(200).send({ transactions: payload });
     });
-}
+};

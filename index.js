@@ -1,11 +1,11 @@
-require("dotenv").config({path: './src/lib/variables.env'});
+require("dotenv").config({ path: './src/lib/variables.env' });
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const { DEV_MODE, PROD_DOMAIN, LOCAL_DOMAIN } = require('./src/lib/ENVIRONMENT_SETTINGS.json');
 
 let allowedOrigin = PROD_DOMAIN;
-if(DEV_MODE) {
+if (DEV_MODE) {
     console.log("DEV MODE IS ON");
     allowedOrigin = LOCAL_DOMAIN;
     console.log(`Listening for requests from ${allowedOrigin}`);
@@ -24,7 +24,7 @@ app.use((req, res, next) => {
     res.set("Access-Control-Request-Method: GET, POST");
     res.set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, x-token, Authorization");
     res.set('Access-Control-Allow-Credentials', 'true');
-    if(req.method === 'OPTIONS') {
+    if (req.method === 'OPTIONS') {
         res.end();
     }
     else {
@@ -44,6 +44,9 @@ app.use('/api/auth', authRoutes);
 
 const spendingRoutes = require('./src/routes/spending/spendingRouter');
 app.use('/api/spending', spendingRoutes);
+
+const recurringSpendingRoutes = require('./src/routes/recurringSpending/recurringSpendingRouter');
+app.use('/api/recurring', recurringSpendingRoutes);
 
 const accountRoutes = require('./src/routes/accounts/accountsRouter');
 app.use('/api/accounts', accountRoutes);

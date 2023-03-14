@@ -1,5 +1,6 @@
 /** Contains the authentication routes of the api */
 const express = require('express');
+
 const authRouter = express.Router();
 const validateRegistration = require('../../middleware/validateRegistration');
 const verifyAuthToken = require('../../middleware/verifyAuthToken');
