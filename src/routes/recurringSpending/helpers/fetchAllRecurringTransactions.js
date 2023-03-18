@@ -36,10 +36,10 @@ module.exports = function fetchAllRecurringTransactions(username) {
 
             const recurringTransactions = results.map((transaction) => {
                 const isVariableRecurring = Boolean(transaction.is_variable_recurring);
-                const amount = Number(transaction.amount.toFixed(2));
+                const estimatedAmount = Number(transaction.amount.toFixed(2));
 
                 // Add amount to total
-                estimatedMonthTotal += amount;
+                estimatedMonthTotal += estimatedAmount;
 
                 // Set flag to indicate a transaction that varies month to month
                 if (!hasVariableRecurring) {
@@ -50,16 +50,18 @@ module.exports = function fetchAllRecurringTransactions(username) {
                     recurringSpendId: transaction.recurring_spend_id,
                     category: transaction.category,
                     expenseName: transaction.spend_name,
-                    amount,
+                    estimatedAmount,
                     isVariableRecurring,
                     isActive: Boolean(transaction.is_active)
                 };
+
+                const transactionAmount = Number(transaction.transaction_amount.toFixed(2));
 
                 if (isVariableRecurring) {
                     const currentMonth = dayjs(new Date()).format('MM/YYYY');
                     const lastLoggedMonth = dayjs(transaction.date).format('MM/YYYY');
                     const requiresUpdate = currentMonth !== lastLoggedMonth;
-                    const actualTransactionAmount = requiresUpdate ? amount : Number(transaction.transaction_amount.toFixed(2));
+                    const actualTransactionAmount = requiresUpdate ? estimatedAmount : transactionAmount;
 
                     transactionDetails.requiresUpdate = requiresUpdate;
                     transactionDetails.actualAmount = actualTransactionAmount;
@@ -70,7 +72,8 @@ module.exports = function fetchAllRecurringTransactions(username) {
                     }
                 } else {
                     // Fixed monthly just needs to use amount
-                    actualMonthTotal += amount;
+                    transactionDetails.actualAmount = transactionAmount;
+                    actualMonthTotal += transactionAmount;
                 }
 
                 return transactionDetails;
