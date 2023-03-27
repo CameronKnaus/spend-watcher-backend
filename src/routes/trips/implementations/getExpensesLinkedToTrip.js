@@ -14,7 +14,7 @@ module.exports = function getExpensesLinkedToTrip(request, response) {
     }
 
     // Query to get the last 5 transactions
-    const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)} AND linked_trip_id=${db.escape(tripId)};`;
+    const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)} AND linked_trip_id=${db.escape(tripId)} ORDER BY date DESC;`;
 
     // query the database
     db.query(STATEMENT, (error, results) => {

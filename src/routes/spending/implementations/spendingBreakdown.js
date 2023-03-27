@@ -17,7 +17,8 @@ function groupTransactionByDate(objectUnderConstruction, transaction) {
         isCustomCategory: !!transaction.is_custom_category,
         date,
         dateISO,
-        note: transaction.note
+        note: transaction.note,
+        linkedTripId: transaction.linked_trip_id
     });
 }
 
