@@ -7,13 +7,13 @@ module.exports = function editSpending(request, response) {
 
     // Query to get the last 5 transactions
     const {
-        transactionId, category, amount, isUncommon, selectedDate, note
+        transactionId, category, amount, isUncommon, selectedDate, note, linkedTripId
     } = request.body;
     if (typeof amount !== 'number' || typeof category !== 'string' || typeof isUncommon !== 'boolean' || (typeof note !== 'string')) {
         return response.status(400).send({ message: 'Invalid types given as arguments' });
     }
     const STATEMENT = `UPDATE spend_transactions SET category=${db.escape(category)}, amount=${db.escape(amount)},`
-        + `uncommon=${db.escape(isUncommon)}, date=${db.escape(selectedDate)}, note=${note ? db.escape(note) : 'NULL'} `
+        + `uncommon=${db.escape(isUncommon)}, date=${db.escape(selectedDate)}, note=${note ? db.escape(note) : 'NULL'}, linked_trip_id=${linkedTripId ? db.escape(linkedTripId) : 'NULL'} `
         + `WHERE username="${username}" AND transaction_id=${transactionId}`;
 
     // query the database

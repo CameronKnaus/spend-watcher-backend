@@ -5,7 +5,6 @@ module.exports = function editRecurringSpending(request, response) {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
 
-    // Query to get the last 5 transactions
     const {
         recurringSpendId, spendCategory, amount, isVariable, spendName
     } = request.body;

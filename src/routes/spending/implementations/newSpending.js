@@ -7,12 +7,12 @@ module.exports = function newSpending(request, response) {
 
     // Query to get the last 5 transactions
     const {
-        category, amount, isUncommon, selectedDate, note
+        category, amount, isUncommon, selectedDate, note, linkedTripId
     } = request.body;
     if (typeof amount !== 'number' || typeof category !== 'string' || typeof isUncommon !== 'boolean' || (typeof note !== 'string')) {
         return response.status(400).send({ message: 'Invalid types given as arguments' });
     }
-    const STATEMENT = `INSERT INTO spend_transactions (username, category, amount, uncommon, date, note) VALUES (${db.escape(username)}, ${db.escape(category)}, ${db.escape(amount)}, ${db.escape(isUncommon)}, ${db.escape(selectedDate)}, ${note ? db.escape(note) : 'NULL'});`;
+    const STATEMENT = `INSERT INTO spend_transactions (username, category, amount, uncommon, date, note, linked_trip_id) VALUES (${db.escape(username)}, ${db.escape(category)}, ${db.escape(amount)}, ${db.escape(isUncommon)}, ${db.escape(selectedDate)}, ${note ? db.escape(note) : 'NULL'}, ${linkedTripId ? db.escape(linkedTripId) : 'NULL'});`;
 
     // query the database
     db.query(STATEMENT, (error) => {
