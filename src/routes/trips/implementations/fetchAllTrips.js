@@ -9,7 +9,7 @@ module.exports = function fetchAllTrips(request, response) {
     const { currentDate } = request.query;
 
     // Query to get the last 5 transactions
-    const STATEMENT = `SELECT * FROM trips WHERE username=${db.escape(username)};`;
+    const STATEMENT = `SELECT * FROM trips WHERE username=${db.escape(username)} ORDER BY start_date DESC;`;
 
     // query the database
     db.query(STATEMENT, (error, results) => {
