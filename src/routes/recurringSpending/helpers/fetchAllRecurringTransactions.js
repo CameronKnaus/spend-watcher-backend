@@ -2,27 +2,33 @@ const dayjs = require('dayjs');
 const db = require('../../../lib/db');
 const updateFixedRecurringExpenses = require('./updateFixedRecurringExpenses');
 
-module.exports = function fetchAllRecurringTransactions(username) {
+module.exports = function fetchAllRecurringTransactions(username, startDate, endDate) {
     return new Promise((resolve, reject) => {
         updateFixedRecurringExpenses(username);
+
+        let dateClause = '';
+
+        if (startDate && endDate) {
+            dateClause = `WHERE date BETWEEN ${db.escape(startDate)} AND ${db.escape(endDate)} `;
+        }
 
         const QUERY = `SELECT RecurringExpenses.recurring_spend_id, username, category, spend_name, amount, is_variable_recurring, is_active, transaction_amount, date, transaction_id
                     FROM ( SELECT * FROM user_information.recurring_spending WHERE username="${username}") AS RecurringExpenses
                     JOIN ( 
                         SELECT * FROM user_information.recurring_transactions AS A
                         INNER JOIN (
-                            SELECT recurring_spend_id AS recurringSpendMaxId, MAX(date) AS maxDate
+                            SELECT recurring_spend_id AS recurringSpendMaxId${dateClause ? '' : ', MAX(date) AS maxDate'}
                             FROM user_information.recurring_transactions
                             GROUP BY recurring_spend_id
                         ) AS B
-                        ON A.recurring_spend_id = B.recurringSpendMaxId AND A.date = B.maxDate
+                        ON A.recurring_spend_id = B.recurringSpendMaxId ${dateClause ? '' : ' AND A.date = B.maxDate'}
                     ) AS RecentTransactions
-                    ON RecurringExpenses.recurring_spend_id = RecentTransactions.recurring_spend_id ORDER BY amount DESC`;
+                    ON RecurringExpenses.recurring_spend_id = RecentTransactions.recurring_spend_id ${dateClause}ORDER BY amount DESC`;
 
         // query the database
         db.query(QUERY, (error, results) => {
             if (error) {
-                return reject();
+                return reject(error);
             }
 
             if (results.length === 0) {

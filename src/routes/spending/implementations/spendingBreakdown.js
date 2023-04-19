@@ -3,6 +3,7 @@ const db = require('../../../lib/db');
 const newArrayOrPush = require('../../../utils/ObjectManipulation/newArrayOrPush');
 const increaseTotalByCategory = require('../../../utils/ObjectManipulation/increaseTotalByKey');
 const toFixedNumber = require('../../../utils/CalculationHelpers/toFixedNumber');
+const fetchAllRecurringTransactions = require('../../recurringSpending/helpers/fetchAllRecurringTransactions');
 
 function groupTransactionByDate(objectUnderConstruction, transaction) {
     const dateISO = transaction.date;
@@ -30,7 +31,7 @@ module.exports = function spendingBreakdown(request, response) {
 
     const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)} AND date between ${db.escape(startDate)} AND ${db.escape(endDate)} ORDER BY date DESC;`;
 
-    db.query(STATEMENT, (error, results) => {
+    db.query(STATEMENT, async (error, results) => {
         if (error) {
             return response.status(400).send(error);
         }
@@ -39,37 +40,50 @@ module.exports = function spendingBreakdown(request, response) {
             return response.status(200).json({ noTransactions: true });
         }
 
-        // Do an initial pass through all transactions, making a group by date object and spending totals
-        let finalTotalSpent = 0;
-        let finalTotalTransactions = 0;
-        const transactionsGroupedByDate = {};
-        const totalSpentPerCategory = {};
-        const totalTransactionsPerCategory = {};
-        results.forEach((transaction) => {
-            // Update final total with current transaction
-            finalTotalSpent += transaction.amount;
-            finalTotalTransactions++;
+        fetchAllRecurringTransactions(username, startDate, endDate).then((recurringTransactionData) => {
+            // Do an initial pass through all transactions, making a group by date object and spending totals
+            let discretionaryTotal = 0;
+            let finalTotalTransactions = 0;
+            const transactionsGroupedByDate = {};
+            const totalSpentPerCategory = {};
+            const totalTransactionsPerCategory = {};
 
-            // transaction by date grouping
-            groupTransactionByDate(transactionsGroupedByDate, transaction);
+            // const transactionsList = [...results, ...(recurringTransactionData.recurringTransactions || [])];
+            results.forEach((transaction) => {
+                // Update final total with current transaction
+                discretionaryTotal += transaction.amount;
+                finalTotalTransactions++;
 
-            // Increase total spent per category
-            increaseTotalByCategory(totalSpentPerCategory, transaction.category, transaction.amount);
-            // Ensure all totals are rounded properly to 2 decimals
-            Object.keys(totalSpentPerCategory).forEach((key) => {
-                totalSpentPerCategory[key] = toFixedNumber(totalSpentPerCategory[key]);
+                // transaction by date grouping
+                groupTransactionByDate(transactionsGroupedByDate, transaction);
+
+                // Increase total spent per category
+                increaseTotalByCategory(totalSpentPerCategory, transaction.category, transaction.amount);
+                // Ensure all totals are rounded properly to 2 decimals
+                Object.keys(totalSpentPerCategory).forEach((key) => {
+                    totalSpentPerCategory[key] = toFixedNumber(totalSpentPerCategory[key]);
+                });
+
+                // Increase the amount transactions made for the given category
+                increaseTotalByCategory(totalTransactionsPerCategory, transaction.category, 1);
             });
 
-            // Increase the amount transactions made for the given category
-            increaseTotalByCategory(totalTransactionsPerCategory, transaction.category, 1);
-        });
+            const recurringSpendTotal = recurringTransactionData.actualMonthTotal || 0;
 
-        response.status(200).json({
-            finalTotalSpent,
-            finalTotalTransactions,
-            transactionsGroupedByDate,
-            totalSpentPerCategory,
-            totalTransactionsPerCategory
+            response.status(200).json({
+                finalTotalSpent: discretionaryTotal + recurringSpendTotal,
+                recurringSpendTotal,
+                discretionaryTotal,
+                finalTotalTransactions,
+                transactionsGroupedByDate,
+                totalSpentPerCategory,
+                totalTransactionsPerCategory,
+                recurringTransactionData,
+                TEST: recurringTransactionData.recurringTransactions
+            });
+        }).catch((recurringTransactionError) => {
+            console.log(recurringTransactionError);
+            response.status(400).send();
         });
     });
 };
