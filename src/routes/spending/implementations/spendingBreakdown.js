@@ -78,8 +78,7 @@ module.exports = function spendingBreakdown(request, response) {
                 transactionsGroupedByDate,
                 totalSpentPerCategory,
                 totalTransactionsPerCategory,
-                recurringTransactionData,
-                TEST: recurringTransactionData.recurringTransactions
+                recurringTransactionData
             });
         }).catch((recurringTransactionError) => {
             console.log(recurringTransactionError);
