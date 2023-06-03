@@ -8,7 +8,7 @@ const fetchRecurringTransactionHistory = require('../../recurringSpending/helper
 
 function groupTransactionByDate(objectUnderConstruction, transaction, isRecurringTransaction) {
     const dateISO = transaction.date;
-    const date = dayjs(transaction.date).format('DD/MM/YY');
+    const date = dayjs(transaction.date).format('MM/DD/YY');
 
     const dataToPush = isRecurringTransaction ? {
         ...transaction,
