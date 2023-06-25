@@ -33,9 +33,12 @@ function groupTransactionByDate(objectUnderConstruction, transaction, isRecurrin
 module.exports = async function spendingBreakdown(request, response) {
     // Resolve the username from the token
     const username = getUsernameFromToken(request.cookies.token);
-    const { startDate, endDate, includeRecurringTransactions } = request.body;
+    const {
+        startDate, endDate, includeRecurringTransactions, showAllData
+    } = request.body;
 
-    const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)} AND date between ${db.escape(startDate)} AND ${db.escape(endDate)} ORDER BY date DESC;`;
+    const dateClause = ` AND date between ${db.escape(startDate)} AND ${db.escape(endDate)}`;
+    const STATEMENT = `SELECT * FROM spend_transactions WHERE username=${db.escape(username)}${showAllData ? '' : dateClause} ORDER BY date DESC;`;
 
     db.query(STATEMENT, (error, discretionaryTransactionData) => {
         if (error) {
@@ -90,6 +93,10 @@ module.exports = async function spendingBreakdown(request, response) {
             });
 
             response.status(200).json({
+                dateRange: {
+                    start: dayjs(discretionaryTransactionData.at(-1).date).format('MM/DD/YYYY'),
+                    end: dayjs(discretionaryTransactionData.at(0).date).format('MM/DD/YYYY')
+                },
                 finalTotalSpent: toFixedNumber(discretionaryTotal + recurringSpendTotal),
                 recurringSpendTotal: toFixedNumber(recurringSpendTotal),
                 discretionaryTotal: toFixedNumber(discretionaryTotal),
