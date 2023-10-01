@@ -1,34 +1,12 @@
 const dayjs = require('dayjs');
 const getUsernameFromToken = require('../../../utils/TokenUtils/getUsernameFromToken');
 const db = require('../../../lib/db');
-const newArrayOrPush = require('../../../utils/ObjectManipulation/newArrayOrPush');
 const increaseTotalByCategory = require('../../../utils/ObjectManipulation/increaseTotalByKey');
 const toFixedNumber = require('../../../utils/CalculationHelpers/toFixedNumber');
 const fetchRecurringTransactionHistory = require('../../recurringSpending/helpers/fetchRecurringTransactionHistory');
-
-function groupTransactionByDate(objectUnderConstruction, transaction, isRecurringTransaction) {
-    const dateISO = transaction.date;
-    const date = dayjs(transaction.date).format('MM/DD/YY');
-
-    const dataToPush = isRecurringTransaction ? {
-        ...transaction,
-        date
-    } : {
-        transactionId: transaction.transaction_id,
-        category: transaction.category,
-        amount: transaction.amount,
-        isUncommon: !!transaction.uncommon,
-        isCustomCategory: !!transaction.is_custom_category,
-        date,
-        dateISO,
-        note: transaction.note,
-        linkedTripId: transaction.linked_trip_id,
-        isRecurringTransaction
-    };
-
-    // transaction by date grouping
-    newArrayOrPush(objectUnderConstruction, date, dataToPush);
-}
+const formatTransaction = require('./helpers/formatTransaction');
+const newArrayOrPush = require('../../../utils/ObjectManipulation/newArrayOrPush');
+const generateCategoryTotalDataPoints = require('./helpers/generateCategoryTotalDataPoints');
 
 module.exports = async function spendingBreakdown(request, response) {
     // Resolve the username from the token
@@ -48,7 +26,8 @@ module.exports = async function spendingBreakdown(request, response) {
         fetchRecurringTransactionHistory(username, startDate, endDate).then((recurringTransactionData) => {
             const noDiscretionaryData = !discretionaryTransactionData || !discretionaryTransactionData.length;
             const noRecurringData = !recurringTransactionData || !recurringTransactionData.length;
-            if (noDiscretionaryData && noRecurringData) {
+
+            if (noDiscretionaryData && (!includeRecurringTransactions && noRecurringData)) {
                 return response.status(200).json({ noTransactions: true });
             }
 
@@ -59,10 +38,12 @@ module.exports = async function spendingBreakdown(request, response) {
             const transactionsGroupedByDate = {};
             const totalSpentPerCategory = {};
             const totalTransactionsPerCategory = {};
+            const transactionsMappedById = {};
+            const includedCategoriesSet = new Set();
 
             [...discretionaryTransactionData, ...recurringTransactionData].forEach((transaction) => {
                 const isRecurringTransaction = Boolean(transaction.recurringSpendId);
-                const transactionAmount = isRecurringTransaction ? transaction.transactionAmount : transaction.amount;
+                const transactionAmount = transaction.amount;
 
                 // Update final total with current transaction
                 if (isRecurringTransaction) {
@@ -77,8 +58,15 @@ module.exports = async function spendingBreakdown(request, response) {
 
                 finalTotalTransactions++;
 
-                // transaction by date grouping
-                groupTransactionByDate(transactionsGroupedByDate, transaction, isRecurringTransaction);
+                // Add category to included categories list
+                includedCategoriesSet.add(transaction.category);
+
+                // Add transaction to id-based look up table
+                const { transactionId, formattedTransaction } = formatTransaction(transaction, isRecurringTransaction);
+                transactionsMappedById[transactionId] = formattedTransaction;
+
+                // group transactions by date
+                newArrayOrPush(transactionsGroupedByDate, formattedTransaction.date, formattedTransaction);
 
                 // Increase total spent per category
                 increaseTotalByCategory(totalSpentPerCategory, transaction.category, transactionAmount);
@@ -92,18 +80,25 @@ module.exports = async function spendingBreakdown(request, response) {
                 totalSpentPerCategory[key] = toFixedNumber(totalSpentPerCategory[key]);
             });
 
+            // Get the date range
+            const targetDataSet = noDiscretionaryData ? recurringTransactionData : discretionaryTransactionData;
+            const startDateDayJS = dayjs(targetDataSet.at(-1).date);
+            const endDateDayJS = dayjs(targetDataSet.at(0).date);
+
+            const categoryTotalDataPoints = generateCategoryTotalDataPoints([...includedCategoriesSet], transactionsGroupedByDate, transactionsMappedById, startDateDayJS, endDateDayJS);
+
             response.status(200).json({
-                dateRange: {
-                    start: dayjs(discretionaryTransactionData.at(-1).date).format('MM/DD/YYYY'),
-                    end: dayjs(discretionaryTransactionData.at(0).date).format('MM/DD/YYYY')
-                },
+                startDate: startDateDayJS?.format('MM/DD/YYYY'),
+                endDate: endDateDayJS?.format('MM/DD/YYYY'),
                 finalTotalSpent: toFixedNumber(discretionaryTotal + recurringSpendTotal),
                 recurringSpendTotal: toFixedNumber(recurringSpendTotal),
                 discretionaryTotal: toFixedNumber(discretionaryTotal),
+                transactionsMappedById,
                 finalTotalTransactions,
                 transactionsGroupedByDate,
-                totalSpentPerCategory,
-                totalTransactionsPerCategory
+                categoryTotals: totalSpentPerCategory,
+                totalTransactionsPerCategory,
+                categoryTotalDataPoints
             });
         }).catch((recurringTransactionError) => {
             console.log(recurringTransactionError);

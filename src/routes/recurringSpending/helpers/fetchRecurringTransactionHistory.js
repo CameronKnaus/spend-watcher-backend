@@ -32,7 +32,7 @@ module.exports = function fetchRecurringTransactionHistory(username, startDate, 
             const recurringTransactionList = results.map((transactionData) => ({
                 transactionId: transactionData.transaction_id,
                 date: transactionData.date,
-                transactionAmount: transactionData.transaction_amount,
+                amount: transactionData.transaction_amount,
                 isActive: Boolean(transactionData.is_active),
                 isVariableRecurring: transactionData.is_variable_recurring,
                 estimatedAmount: transactionData.amount,

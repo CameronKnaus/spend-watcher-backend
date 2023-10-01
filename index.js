@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const dayjs = require('dayjs');
 const isBetween = require('dayjs/plugin/isBetween');
+const isSameOrBefore = require('dayjs/plugin/isSameOrBefore');
 const { DEV_MODE, PROD_DOMAIN, LOCAL_DOMAIN } = require('./src/lib/ENVIRONMENT_SETTINGS.json');
 
 // Route imports
@@ -22,6 +23,7 @@ if (DEV_MODE) {
 
 // Augment dayjs with plugins
 dayjs.extend(isBetween);
+dayjs.extend(isSameOrBefore);
 
 // Define the express app
 const app = express();
